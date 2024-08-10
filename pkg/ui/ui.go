@@ -29,12 +29,17 @@ func GetPlayerAction(name string) string {
 
 	action = strings.ToLower(action)
 
-	if action != "cooperate" && action != "defect" {
-		action = strategies[src.Intn(len(strategies))]
-		fmt.Printf("Invalid Input, randomly assigning action %s\n", action)
+	switch action {
+	case "1", "c", "cooperate":
+		return "cooperate"
+	case "2", "d", "defect":
+		return "defect"
+	default:
+		random := strategies[src.Intn(len(strategies))]
+		fmt.Printf("Invalid input, randomly assigning action: %s\n", random)
+		return random
 	}
 
-	return action
 }
 
 func DisplayOutcome(player1 player.Player, player2 player.Player, outcome game.Game) {
