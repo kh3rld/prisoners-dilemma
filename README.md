@@ -28,11 +28,19 @@ The **Prisoner's Dilemma Game** is a strategic [game](https://en.wikipedia.org/w
     ```bash
     cd prisoners-dilemma
     ```
-3. **Build the project**:
+3. **Initialize the Go module**:
+   ```bash
+   go mod init github.com/kh3rld/prisoners-dilemma
+   ```
+4. **Tidy up the dependencies**:
+   ```bash
+   go mod tidy
+   ```
+5. **Build the project**:
     ```bash
     go build ./cmd
     ```
-4. **Run the game**:
+6. **Run the game**:
     ```bash
     ./cmd
     ```
