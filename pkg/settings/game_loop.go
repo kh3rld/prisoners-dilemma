@@ -3,30 +3,32 @@ package settings
 import (
 	"fmt"
 
+	"github.com/kh3rld/prisoners-dilemma/pkg/common"
 	"github.com/kh3rld/prisoners-dilemma/pkg/game"
+	"github.com/kh3rld/prisoners-dilemma/pkg/network"
 	"github.com/kh3rld/prisoners-dilemma/pkg/player"
 	"github.com/kh3rld/prisoners-dilemma/pkg/ui"
-	"github.com/kh3rld/prisoners-dilemma/pkg/utils"
 )
 
 var player1Name, player2Name string
 
-func SetPlayers() (player.Player, player.Player) {
-	var player1, player2 player.Player
+func SetPlayers() (common.PlayerInterface, common.PlayerInterface) {
+	p1 := &player.Player{}
+	p2 := &player.Player{}
 
 	if player1Name == "" {
 		fmt.Print("Enter the name of Player 1: ")
 		fmt.Scanln(&player1Name)
 	}
-	player1 = player.Player{Name: player1Name}
+	// player1 = player.Player{Name: player1Name}
 
 	if player2Name == "" {
 		fmt.Print("Enter the name of Player 2: ")
 		fmt.Scanln(&player2Name)
 	}
-	player2 = player.Player{Name: player2Name}
+	// player2 = player.Player{Name: player2Name}
 
-	return player1, player2
+	return p1, p2
 }
 
 func PlayMultipleRounds(rounds int, player1, player2 *player.Player) error {
@@ -46,22 +48,53 @@ func PlayMultipleRounds(rounds int, player1, player2 *player.Player) error {
 	}
 	return nil
 }
-func GameLoop() {
+
+func GameLoop(conn interface{}, player1, player2 common.PlayerInterface) {
 	for {
-		player1, player2 := SetPlayers()
+		if conn == nil {
+			player1, player2 = SetPlayers()
+		}
 
 		rounds, showSummary := GetUserSettings()
 
-		if err := PlayMultipleRounds(rounds, &player1, &player2); err != nil {
-			fmt.Println("Error during game:", err)
-			continue
-		}
+		for round := 1; round <= rounds; round++ {
+			var action1, action2 string
+			if conn == nil {
+				action1 = player1.GetAction()
+				action2 = player2.GetAction()
+			} else {
+				switch c := conn.(type) {
+				case *network.Server:
+					action1 = c.ReceiveAction(c.Clients[0])
+					action2 = c.ReceiveAction(c.Clients[1])
+				case *network.Client:
+					c.SendAction(player1.GetAction())
+					action1 = c.ReceiveResult()
+					c.SendAction(player2.GetAction())
+					action2 = c.ReceiveResult()
+				}
+			}
 
-		if showSummary {
-			ui.DisplayFinalResults(player1, player2)
-		}
+			player1.SetAction(action1)
+			player2.SetAction(action2)
 
-		if !utils.ConfirmExit() {
+			g := game.Game{Player1: player1, Player2: player2}
+			g.DetermineOutcome()
+			outcome := g.Result.Description
+
+			if conn == nil {
+				ui.DisplayRoundSummary(round, *player1.(*player.Player), *player2.(*player.Player), g)
+			} else {
+				switch c := conn.(type) {
+				case *network.Server:
+					c.SendResult(c.Clients[0], outcome)
+					c.SendResult(c.Clients[1], outcome)
+				case *network.Client:
+					c.ReceiveResult()
+				}
+			}
+		}
+		if !showSummary {
 			break
 		}
 	}
