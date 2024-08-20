@@ -9,12 +9,18 @@ import (
 )
 
 func DisplayHelp() {
-	fmt.Println(CenterText("Prisoner's Dilemma Game Instructions:"))
-	fmt.Println(CenterText("1. Each player can choose to cooperate or defect."))
-	fmt.Println(CenterText("2. If both players cooperate, they each get 1 year."))
-	fmt.Println(CenterText("3. If one defects and the other cooperates, the defector goes free and the cooperator gets 3 years."))
-	fmt.Println(CenterText("4. If both defect, they each get 2 years."))
-	fmt.Println(CenterText("Use '1' for cooperate, '2' for defect."))
+	// ClearScreen()
+	// DisplayArt()
+
+	fmt.Println(CenterText("Instructions:"))
+	fmt.Println(CenterText("1. Choose whether to play locally or over the network."))
+	fmt.Println(CenterText("2. If playing over the network, you can host or join a game."))
+	fmt.Println(CenterText("3. After establishing the connection, you'll see your opponent's name."))
+	fmt.Println(CenterText("4. Follow the prompts to make your choices."))
+	fmt.Println(CenterText("5. The game will display the outcome after each round."))
+
+	fmt.Println()
+	// utils.Pause()
 }
 
 func GetTerminalWidth() int {
