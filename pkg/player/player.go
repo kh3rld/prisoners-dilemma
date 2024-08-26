@@ -14,6 +14,10 @@ func (p *Player) GetAction() string {
 	return p.Action
 }
 
+func (p *Player) SetName(name string) {
+	p.Name = name
+}
+
 func (p *Player) GetName() string {
 	return p.Name
 }
