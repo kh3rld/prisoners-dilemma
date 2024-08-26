@@ -5,21 +5,54 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
+	"time"
+
+	"github.com/kh3rld/prisoners-dilemma/pkg/common"
+)
+
+const (
+	broadcastPort     = "8081"
+	discoveryMsg      = "DISCOVER"
+	broadcastInterval = 5 * time.Second
 )
 
 type Server struct {
-	Address  string
+	IP       string
+	Port     string
+	UID      string
 	Listener net.Listener
 	Clients  []net.Conn
 }
 
 func NewServer(port string) *Server {
-	ln, err := net.Listen("tcp", ":"+port)
+	ip, err := common.GetLocalIP()
+	if err != nil {
+		log.Fatalf("Error getting local IP: %v", err)
+	}
+	ln, err := net.Listen("tcp", ip+":"+port)
 	if err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
-	return &Server{Listener: ln, Clients: make([]net.Conn, 0)}
-	// 	// return &Server{Address: port}
+	return &Server{IP: ip, Port: port, UID: "", Listener: ln, Clients: make([]net.Conn, 0)}
+}
+
+func (s *Server) StartBroadcasting() {
+	conn, err := net.Dial("udp", fmt.Sprintf("255.255.255.255:%s", broadcastPort))
+	if err != nil {
+		log.Fatalf("Error setting up broadcast connection: %v", err)
+	}
+	defer conn.Close()
+
+	broadcastMessage := fmt.Sprintf("%s:%s:%s", s.IP, s.Port, s.UID)
+
+	for {
+		_, err := conn.Write([]byte(broadcastMessage))
+		if err != nil {
+			log.Printf("Error broadcasting server address: %v", err)
+		}
+		time.Sleep(broadcastInterval)
+	}
 }
 
 func (s *Server) ReceiveAction(conn net.Conn) string {
@@ -40,16 +73,9 @@ func (s *Server) SendResult(conn net.Conn, result string) {
 }
 
 func (s *Server) AcceptConnections() {
-	listener, err := net.Listen("tcp", s.Address)
-	if err != nil {
-		fmt.Println("Error starting server:", err)
-		return
-	}
-	s.Listener = listener
-	fmt.Println("Server started on", s.Address)
-
+	fmt.Println("Server started on", s.IP+":"+s.Port)
 	for {
-		conn, err := listener.Accept()
+		conn, err := s.Listener.Accept()
 		if err != nil {
 			fmt.Println("Error accepting connection:", err)
 			continue
@@ -67,7 +93,7 @@ func (s *Server) SendName(conn net.Conn, name string) {
 
 func (s *Server) ReceiveName(conn net.Conn) string {
 	message, _ := bufio.NewReader(conn).ReadString('\n')
-	return message[:len(message)-1]
+	return strings.TrimSpace(message)
 }
 
 func (s *Server) Close() {
