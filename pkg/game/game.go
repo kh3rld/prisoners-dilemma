@@ -1,7 +1,13 @@
 package game
 
 import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+
 	"github.com/kh3rld/prisoners-dilemma/pkg/common"
+	"github.com/kh3rld/prisoners-dilemma/pkg/network"
 	"github.com/kh3rld/prisoners-dilemma/pkg/player"
 )
 
@@ -10,6 +16,66 @@ type Game struct {
 	Player2 common.PlayerInterface
 	Rounds  int
 	Result  common.Outcome
+	Server  *network.Server
+	Client  *network.Client
+}
+
+func (g *Game) StartGameServer(detailedSummaries bool) {
+	for round := 1; round <= g.Rounds; round++ {
+		player1Action := g.Server.ReceiveAction(g.Server.Clients[0])
+		player2Action := g.Server.ReceiveAction(g.Server.Clients[1])
+
+		g.Player1.SetAction(player1Action)
+		g.Player2.SetAction(player2Action)
+
+		g.DetermineOutcome()
+		outcome := g.Result.Description
+
+		g.Server.SendResult(g.Server.Clients[0], outcome)
+		g.Server.SendResult(g.Server.Clients[1], outcome)
+
+		if detailedSummaries {
+			fmt.Printf("Round %d Summary:\n", round)
+			fmt.Printf("Player 1 chose: %s\n", player1Action)
+			fmt.Printf("Player 2 chose: %s\n", player2Action)
+			fmt.Println("Outcome:", outcome)
+		}
+	}
+}
+
+func (g *Game) StartGameClient(client *network.Client, detailedSummaries bool) {
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Println("Connected to the server. The game is about to start.")
+	fmt.Println("You will be asked to choose between 'cooperate' or 'defect' for each round.")
+	fmt.Println()
+
+	for round := 1; round <= g.Rounds; round++ {
+		fmt.Printf("Round %d\n", round)
+		fmt.Print("Enter your action (cooperate/defect): ")
+		action, _ := reader.ReadString('\n')
+		action = strings.TrimSpace(strings.ToLower(action))
+
+		if action != "cooperate" && action != "defect" {
+			fmt.Println("Invalid action. Please enter 'cooperate' or 'defect'.")
+			round--
+			continue
+		}
+
+		client.SendAction(action)
+
+		result := client.ReceiveResult()
+		fmt.Println("Round result:", result)
+
+		if detailedSummaries {
+			fmt.Printf("Round %d Summary:\n", round)
+			fmt.Printf("You chose: %s\n", action)
+			fmt.Println("Outcome:", result)
+		}
+	}
+
+	fmt.Println("Game over.")
+	client.Close()
 }
 
 func (g *Game) DetermineOutcome() {
