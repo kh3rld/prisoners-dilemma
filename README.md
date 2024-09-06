@@ -38,7 +38,7 @@ The **Prisoner's Dilemma Game** is a strategic [game](https://en.wikipedia.org/w
    ```
 5. **Build the project**:
     ```go
-    go build ./cmd
+    cd ./cmd && go build .
     ```
 6. **Run the game**:
     ```bash
