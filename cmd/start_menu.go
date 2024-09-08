@@ -22,7 +22,10 @@ func ShowCursor() {
 func DisplayMenu() {
 	ClearScreen()
 	ui.DisplayArt()
+	handleMenuChoice()
+}
 
+func handleMenuChoice() {
 	for {
 		fmt.Println(ui.CenterText("1. Play Locally"))
 		fmt.Println(ui.CenterText("2. Play Over Network"))
