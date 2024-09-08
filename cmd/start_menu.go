@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kh3rld/prisoners-dilemma/pkg/player"
 	"github.com/kh3rld/prisoners-dilemma/pkg/settings"
 	"github.com/kh3rld/prisoners-dilemma/pkg/ui"
 	"github.com/kh3rld/prisoners-dilemma/pkg/utils"
@@ -54,19 +53,15 @@ func handleMenuChoice() {
 
 func StartLocalGame() {
 	utils.ShowProgress("Starting game...")
-	player1, player2 := settings.SetPlayers()
-	rounds, detailedSummaries := settings.GetUserSettings()
 
-	p1, ok1 := player1.(*player.Player)
-	p2, ok2 := player2.(*player.Player)
+	p1, p2, err := settings.SetPlayers()
 
-	if !ok1 || !ok2 {
-		fmt.Println("Error: Players must be of type *player.Player")
+	if err != nil {
+		fmt.Println("Error: Could not set up players.")
 		return
 	}
 
-	p1.SetName(player1.GetName())
-	p2.SetName(player2.GetName())
+	rounds, detailedSummaries := settings.GetUserSettings()
 
-	settings.GameLoop(nil, p1, p2, rounds, detailedSummaries)
+	settings.RunGame(p1, p2, rounds, detailedSummaries)
 }
