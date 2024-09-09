@@ -8,6 +8,11 @@ import (
 	"time"
 )
 
+const (
+	ActionCooperate = "cooperate"
+	ActionDefect    = "defect"
+)
+
 var src = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 type PlayerInterface interface {
@@ -27,10 +32,10 @@ type Outcome struct {
 
 func ValidateAction(action string) string {
 	action = strings.ToLower(action)
-	if action == "cooperate" || action == "defect" {
+	if action == ActionCooperate || action == ActionDefect {
 		return action
 	}
-	return "cooperate"
+	return ActionCooperate
 }
 
 func GetRandomAction() string {
