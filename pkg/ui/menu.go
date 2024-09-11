@@ -8,9 +8,18 @@ import (
 	"golang.org/x/term"
 )
 
+func DisplayArt() {
+	fmt.Println(CenterText(GreenText("===================================")))
+	fmt.Println(CenterText(BlueText("  PRISONER'S DILEMMA GAME")))
+	fmt.Println(CenterText(GreenText("===================================")))
+	fmt.Println()
+	fmt.Println(CenterText(GreenText("Developed by Kherld Hussein")))
+	fmt.Println(CenterText(GreenText("Special thanks to the Go community")))
+	fmt.Println(CenterText(GreenText("and open source contributors.")))
+	fmt.Println()
+}
+
 func DisplayHelp() {
-	// ClearScreen()
-	// DisplayArt()
 
 	fmt.Println(CenterText("Instructions:"))
 	fmt.Println(CenterText("1. Choose whether to play locally or over the network."))
@@ -20,7 +29,6 @@ func DisplayHelp() {
 	fmt.Println(CenterText("5. The game will display the outcome after each round."))
 
 	fmt.Println()
-	// utils.Pause()
 }
 
 func GetTerminalWidth() int {

@@ -1,76 +1,41 @@
 package settings
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/kh3rld/prisoners-dilemma/pkg/common"
 	"github.com/kh3rld/prisoners-dilemma/pkg/game"
-	"github.com/kh3rld/prisoners-dilemma/pkg/network"
 	"github.com/kh3rld/prisoners-dilemma/pkg/player"
 	"github.com/kh3rld/prisoners-dilemma/pkg/ui"
 )
 
-var player1Name, player2Name string
+func SetPlayers() (*player.Player, *player.Player, error) {
+	p1 := &player.Player{}
+	p2 := &player.Player{}
 
-func SetPlayers() (common.PlayerInterface, common.PlayerInterface) {
-	p1 := &player.Player{Name: player1Name}
-	p2 := &player.Player{Name: player2Name}
-
-	if player1Name == "" {
-		fmt.Print("Enter the name of Player 1: ")
-		fmt.Scanln(&player1Name)
-		p1.SetName(player1Name)
+	fmt.Print("Enter the name of Player 1: ")
+	if _, err := fmt.Scanln(&p1.Name); err != nil {
+		return nil, nil, errors.New("failed to read player 1 name")
 	}
 
-	if player2Name == "" {
-		fmt.Print("Enter the name of Player 2: ")
-		fmt.Scanln(&player2Name)
-		p2.SetName(player2Name)
+	fmt.Print("Enter the name of Player 2: ")
+	if _, err := fmt.Scanln(&p2.Name); err != nil {
+		return nil, nil, errors.New("failed to read player 2 name")
 	}
 
-	return p1, p2
+	return p1, p2, nil
 }
 
-func PlayMultipleRounds(rounds int, player1, player2 *player.Player) error {
-	g := game.Game{Player1: player1, Player2: player2, Rounds: rounds}
-
+func RunGame(p1, p2 *player.Player, rounds int, detailedSummaries bool) {
+	game := &game.Game{Player1: p1, Player2: p2, Rounds: rounds}
 	for i := 1; i <= rounds; i++ {
 		fmt.Printf("\nStarting Round %d\n", i)
-
-		player1.SetAction(ui.GetPlayerAction(player1.GetName()))
-		player2.SetAction(ui.GetPlayerAction(player2.GetName()))
-
-		g.DetermineOutcome()
-
-		ui.DisplayOutcome(*player1, *player2, g)
-
-		ui.DisplayRoundSummary(i, *player1, *player2, g)
-	}
-	return nil
-}
-
-func GameLoop(conn interface{}, player1, player2 *player.Player, rounds int, detailedSummaries bool) {
-	game := &game.Game{
-		Player1: player1,
-		Player2: player2,
-		Rounds:  rounds,
-	}
-
-	if server, ok := conn.(*network.Server); ok {
-		game.Server = server
-		game.StartGameServer(detailedSummaries)
-	} else if client, ok := conn.(*network.Client); ok {
-		game.StartGameClient(client, detailedSummaries)
-	} else {
-		fmt.Println("Starting a local game...")
-		for i := 1; i <= rounds; i++ {
-			fmt.Printf("\nStarting Round %d\n", i)
-			player1.SetAction(ui.GetPlayerAction(player1.GetName()))
-			player2.SetAction(ui.GetPlayerAction(player2.GetName()))
-			game.DetermineOutcome()
-			ui.DisplayOutcome(*player1, *player2, *game)
-			ui.DisplayRoundSummary(i, *player1, *player2, *game)
+		p1.SetAction(ui.GetPlayerAction(p1.Name))
+		p2.SetAction(ui.GetPlayerAction(p2.Name))
+		game.DetermineOutcome()
+		ui.DisplayOutcome(*p1, *p2, *game)
+		if detailedSummaries {
+			ui.DisplayRoundSummary(i, *p1, *p2, *game)
 		}
-		return
 	}
 }
