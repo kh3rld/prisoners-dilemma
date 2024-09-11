@@ -2,7 +2,7 @@
 
 ## Overview
 
-The **Prisoner's Dilemma Game** is a strategic game built with Go, allowing players to explore the classic game theory problem. Players can compete against each other either locally or over a network, choosing between cooperation or defection in each round. The outcome of each decision impacts their "prison time," with the goal of minimizing their own time.
+The **Prisoner's Dilemma Game** is a strategic [game](https://en.wikipedia.org/wiki/Prisoner%27s_dilemma) built with Go, allowing players to explore the classic game theory problem. Players can compete against each other either locally or over a network, choosing between cooperation or defection in each round. The outcome of each decision impacts their "prison time," with the goal of minimizing their own time.
 
 ## Features
 
@@ -28,11 +28,19 @@ The **Prisoner's Dilemma Game** is a strategic game built with Go, allowing play
     ```bash
     cd prisoners-dilemma
     ```
-3. **Build the project**:
-    ```bash
-    go build ./cmd
+3. **Initialize the Go module**:
+   ```go
+   go mod init github.com/kh3rld/prisoners-dilemma
+   ```
+4. **Tidy up the dependencies**:
+   ```go
+   go mod tidy
+   ```
+5. **Build the project**:
+    ```go
+    cd ./cmd && go build .
     ```
-4. **Run the game**:
+6. **Run the game**:
     ```bash
     ./cmd
     ```
