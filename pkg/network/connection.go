@@ -53,8 +53,61 @@ func (cm *ConnectionManager) RemoveConnection(peerAddr string) {
 // HandleIncomingConnection starts handling data for an incoming connection.
 func (cm *ConnectionManager) HandleIncomingConnection(conn *net.TCPConn) {
 	fmt.Println("Handling incoming connection from:", conn.RemoteAddr().String())
+
+	// Perform handshake to assign player roles
+	playerID := cm.negotiateRole(conn)
+	if playerID == -1 {
+		fmt.Println("Failed to assign role, closing connection:", conn.RemoteAddr().String())
+		conn.Close()
+		return
+	}
+	// Add connection with assigned player ID
+	peerAddr := conn.RemoteAddr().String()
+	cm.AddConnection(peerAddr, conn, playerID)
 	// Handle data in a separate goroutine
 	go cm.HandleGameData(conn)
+}
+
+func (cm *ConnectionManager) negotiateRole(conn *net.TCPConn) int {
+	// Listen for a role request from the connecting peer
+	buffer := make([]byte, 1024)
+	n, err := conn.Read(buffer)
+	if err != nil {
+		fmt.Println("Error reading role request:", err)
+		return -1
+	}
+	request := string(buffer[:n])
+
+	if request == "ROLE_REQUEST" {
+		if _, exists := cm.getPlayerWithID(1); !exists {
+			// Assign Player 1
+			_, err := conn.Write([]byte("ASSIGN_PLAYER_1"))
+			if err != nil {
+				fmt.Println("Error assigning Player 1:", err)
+				return -1
+			}
+			return 1
+		} else if _, exists := cm.getPlayerWithID(2); !exists {
+			// Assign Player 2
+			_, err := conn.Write([]byte("ASSIGN_PLAYER_2"))
+			if err != nil {
+				fmt.Println("Error assigning Player 2:", err)
+				return -1
+			}
+			return 2
+		} else {
+			// No available player slots
+			_, err := conn.Write([]byte("NO_AVAILABLE_SLOT"))
+			if err != nil {
+				fmt.Println("Error sending no slot message:", err)
+			}
+			return -1
+		}
+	}
+
+	// Invalid request or no available slots
+	fmt.Println("Invalid role request or no available player slots")
+	return -1
 }
 
 func (cm *ConnectionManager) HandleGameData(conn *net.TCPConn) {
@@ -91,7 +144,7 @@ func (cm *ConnectionManager) HandleGameData(conn *net.TCPConn) {
 		case strings.HasPrefix(message, "ROUND_OUTCOME"):
 			outcome, err := parseOutcome(message)
 			if err == nil {
-				applyRoundOutcome(outcome)
+				applyRoundOutcome(outcome, cm)
 			}
 
 		default:
@@ -111,4 +164,84 @@ func (cm *ConnectionManager) getPlayerID(conn *net.TCPConn) int {
 	// Where the player ID is not found
 	fmt.Printf("Player ID not found for connection from %s\n", peerAddr)
 	return -1 // Invalid player ID
+}
+
+func (cm *ConnectionManager) connectToPeer(peer string) {
+	addr, err := net.ResolveTCPAddr("tcp", peer)
+	if err != nil {
+		fmt.Println("Error resolving peer address:", err)
+		return
+	}
+
+	conn, err := net.DialTCP("tcp", nil, addr)
+	if err != nil {
+		fmt.Println("Error connecting to peer:", err)
+		return
+	}
+
+	// Perform the handshake to assign roles
+	playerID := cm.performHandshake(conn)
+	if playerID == -1 {
+		fmt.Println("Handshake failed, closing connection")
+		conn.Close()
+		return
+	}
+
+	// Add connection to ConnectionManager with assigned player ID
+	cm.AddConnection(peer, conn, playerID)
+	fmt.Printf("Successfully connected to %s as Player %d\n", peer, playerID)
+}
+
+func (cm *ConnectionManager) performHandshake(conn *net.TCPConn) int {
+	// Send role request
+	_, err := conn.Write([]byte("ROLE_REQUEST"))
+	if err != nil {
+		fmt.Println("Error sending role request:", err)
+		return -1
+	}
+
+	// Wait for role assignment response
+	buffer := make([]byte, 1024)
+	n, err := conn.Read(buffer)
+	if err != nil {
+		fmt.Println("Error reading role assignment:", err)
+		return -1
+	}
+	response := string(buffer[:n])
+
+	// Handle role assignment
+	if response == "ASSIGN_PLAYER_1" {
+		return 1
+	} else if response == "ASSIGN_PLAYER_2" {
+		return 2
+	}
+
+	// Invalid response
+	fmt.Println("Invalid role assignment response:", response)
+	return -1
+}
+
+func (cm *ConnectionManager) getPlayerWithID(playerID int) (*net.TCPConn, bool) {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+
+	for peerAddr, id := range cm.playerIDMapping {
+		if id == playerID {
+			conn, exists := cm.connections[peerAddr]
+			if exists {
+				return conn, true
+			}
+		}
+	}
+	return nil, false
+}
+
+func (cm *ConnectionManager) StartGame() {
+	// Signal both players to start the game
+	for _, conn := range cm.connections {
+		_, err := conn.Write([]byte("GAME_START"))
+		if err != nil {
+			fmt.Println("Error signaling game start:", err)
+		}
+	}
 }
