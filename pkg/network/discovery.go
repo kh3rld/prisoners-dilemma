@@ -93,7 +93,7 @@ func (ds *DiscoveryService) DiscoverAndConnect() {
 	}
 }
 
-func (ds *DiscoveryService) connectToPeer(peer string) {
+func (ds *DiscoveryService) connectToPeer(peer string, playerID int) {
 	addr, err := net.ResolveTCPAddr("tcp", peer)
 	if err != nil {
 		fmt.Println("Error resolving peer address:", err)
@@ -107,6 +107,6 @@ func (ds *DiscoveryService) connectToPeer(peer string) {
 	}
 
 	// Add connection to ConnectionManager
-	ds.cm.AddConnection(peer, conn)
-	fmt.Printf("Successfully connected to %s\n", peer)
+	ds.cm.AddConnection(peer, conn, playerID)
+	fmt.Printf("Successfully connected to %s as Player %d\n", peer, playerID)
 }
