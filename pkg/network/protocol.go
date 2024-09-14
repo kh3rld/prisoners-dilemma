@@ -115,7 +115,7 @@ func updateGameState(newState GameState) {
 }
 
 // Apply the round outcome to update scores based on the outcome
-func applyRoundOutcome(outcome RoundOutcome) {
+func applyRoundOutcome(outcome RoundOutcome, cm *ConnectionManager) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
@@ -132,6 +132,8 @@ func applyRoundOutcome(outcome RoundOutcome) {
 	// Advance to the next round
 	game.Round++
 	fmt.Printf("Proceeding to round %d\n", game.Round)
+	// Broadcast the updated game state to both players
+	broadcastGameState(cm)
 }
 
 func resolveRound() {
@@ -148,5 +150,26 @@ func resolveRound() {
 		outcome = RoundOutcome{Player1Points: 3, Player2Points: 0}
 	}
 
-	applyRoundOutcome(outcome)
+	applyRoundOutcome(outcome, &ConnectionManager{})
+}
+
+func broadcastGameState(cm *ConnectionManager) {
+	gameState := GameState{
+		Round:        game.Round,
+		Player1Score: game.Player1.Score,
+		Player2Score: game.Player2.Score,
+	}
+	gameStateBytes, err := json.Marshal(gameState)
+	if err != nil {
+		fmt.Println("Error marshaling game state:", err)
+		return
+	}
+
+	// Broadcast game state to all connected players
+	for peerAddr, conn := range cm.connections {
+		_, err := conn.Write(append([]byte("GAME_STATE_UPDATE:"), gameStateBytes...))
+		if err != nil {
+			fmt.Printf("Error sending game state to %s: %v\n", peerAddr, err)
+		}
+	}
 }
