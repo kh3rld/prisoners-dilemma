@@ -8,13 +8,18 @@ import (
 )
 
 type ConnectionManager struct {
-	connections map[string]*net.TCPConn
-	mu          sync.Mutex
+	connections     map[string]*net.TCPConn
+	playerIDMapping map[string]int
+	mu              sync.Mutex
 }
 
 // NewConnectionManager initializes a new ConnectionManager.
 func NewConnectionManager() *ConnectionManager {
-	return &ConnectionManager{connections: make(map[string]*net.TCPConn), mu: sync.Mutex{}}
+	return &ConnectionManager{
+		connections:     make(map[string]*net.TCPConn),
+		playerIDMapping: make(map[string]int),
+		mu:              sync.Mutex{},
+	}
 }
 
 // AddConnection adds a new connection to the ConnectionManager.
