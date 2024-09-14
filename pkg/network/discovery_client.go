@@ -5,10 +5,12 @@ import (
 	"net"
 )
 
+// manages the sending of discovery requests.
 type DiscoveryClient struct {
 	conn *net.UDPConn
 }
 
+// initializes a new DiscoveryClient.
 func NewDiscoveryClient() (*DiscoveryClient, error) {
 	addr, err := net.ResolveUDPAddr("udp", discoveryPort)
 	if err != nil {
@@ -23,6 +25,7 @@ func NewDiscoveryClient() (*DiscoveryClient, error) {
 	return &DiscoveryClient{conn: conn}, nil
 }
 
+// sends a discovery request to find peers.
 func (dc *DiscoveryClient) SendDiscoveryRequest() {
 	_, err := dc.conn.Write([]byte(broadcastMsg))
 	if err != nil {
@@ -30,6 +33,7 @@ func (dc *DiscoveryClient) SendDiscoveryRequest() {
 	}
 }
 
+// closes the UDP connection.
 func (dc *DiscoveryClient) Close() {
 	dc.conn.Close()
 }
