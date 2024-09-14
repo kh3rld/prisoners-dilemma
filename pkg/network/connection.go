@@ -99,3 +99,16 @@ func (cm *ConnectionManager) HandleGameData(conn *net.TCPConn) {
 		}
 	}
 }
+
+func (cm *ConnectionManager) getPlayerID(conn *net.TCPConn) int {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+	peerAddr := conn.RemoteAddr().String()
+	if playerID, exists := cm.playerIDMapping[peerAddr]; exists {
+		return playerID
+	}
+
+	// Where the player ID is not found
+	fmt.Printf("Player ID not found for connection from %s\n", peerAddr)
+	return -1 // Invalid player ID
+}
