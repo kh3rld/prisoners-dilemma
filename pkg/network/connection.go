@@ -23,11 +23,12 @@ func NewConnectionManager() *ConnectionManager {
 }
 
 // AddConnection adds a new connection to the ConnectionManager.
-func (cm *ConnectionManager) AddConnection(peerAddr string, conn *net.TCPConn) {
+func (cm *ConnectionManager) AddConnection(peerAddr string, conn *net.TCPConn, playerID int) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	cm.connections[peerAddr] = conn
-	fmt.Printf("Connection added: %s\n", peerAddr)
+	cm.playerIDMapping[peerAddr] = playerID
+	fmt.Printf("Assigned Player %d to connection from %s\n", playerID, peerAddr)
 }
 
 // GetConnection retrieves an existing connection by peer address.
