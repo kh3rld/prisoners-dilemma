@@ -5,6 +5,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 )
 
 type ConnectionManager struct {
@@ -122,6 +123,10 @@ func (cm *ConnectionManager) HandleGameData(conn *net.TCPConn) {
 		// Read incoming message
 		n, err := conn.Read(buffer)
 		if err != nil {
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				fmt.Printf("Timeout error reading game data from %s: %v\n", conn.RemoteAddr().String(), err)
+				continue
+			}
 			fmt.Printf("Error reading game data from %s: %v\n", conn.RemoteAddr().String(), err)
 			return
 		}
@@ -133,7 +138,7 @@ func (cm *ConnectionManager) HandleGameData(conn *net.TCPConn) {
 		case strings.HasPrefix(message, "PLAYER_ACTION"):
 			action := parseAction(message)
 			playerID := cm.getPlayerID(conn)
-			processPlayerAction(playerID, action)
+			processPlayerAction(playerID, action, cm)
 
 		case strings.HasPrefix(message, "GAME_STATE_UPDATE"):
 			gameState, err := parseGameState(message)
@@ -173,22 +178,30 @@ func (cm *ConnectionManager) connectToPeer(peer string) {
 		return
 	}
 
-	conn, err := net.DialTCP("tcp", nil, addr)
+	conn, err := net.DialTimeout("tcp", addr.String(), 5*time.Second)
 	if err != nil {
 		fmt.Println("Error connecting to peer:", err)
 		return
 	}
 
-	// Perform the handshake to assign roles
-	playerID := cm.performHandshake(conn)
-	if playerID == -1 {
-		fmt.Println("Handshake failed, closing connection")
+	// Perform the type assertion to *net.TCPConn
+	tcpConn, ok := conn.(*net.TCPConn)
+	if !ok {
+		fmt.Println("Failed to assert net.Conn to *net.TCPConn")
 		conn.Close()
 		return
 	}
 
+	// Perform the handshake to assign roles
+	playerID := cm.performHandshake(tcpConn)
+	if playerID == -1 {
+		fmt.Println("Handshake failed, closing connection")
+		tcpConn.Close()
+		return
+	}
+
 	// Add connection to ConnectionManager with assigned player ID
-	cm.AddConnection(peer, conn, playerID)
+	cm.AddConnection(peer, tcpConn, playerID)
 	fmt.Printf("Successfully connected to %s as Player %d\n", peer, playerID)
 }
 
