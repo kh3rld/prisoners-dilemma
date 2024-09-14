@@ -48,37 +48,7 @@ func (cm *ConnectionManager) RemoveConnection(peerAddr string) {
 func (cm *ConnectionManager) HandleIncomingConnection(conn *net.TCPConn) {
 	fmt.Println("Handling incoming connection from:", conn.RemoteAddr().String())
 	// Handle data in a separate goroutine
-	go cm.HandleConnectionData(conn)
-}
-
-// HandleConnectionData reads from and processes data on a connection.
-func (cm *ConnectionManager) HandleConnectionData(conn *net.TCPConn) {
-	defer func() {
-		fmt.Printf("Closing connection: %s\n", conn.RemoteAddr().String())
-		conn.Close()
-	}()
-
-	buffer := make([]byte, 1024)
-	for {
-		// Read data from the connection
-		n, err := conn.Read(buffer)
-		if err != nil {
-			fmt.Printf("Error reading from connection %s: %v\n", conn.RemoteAddr().String(), err)
-			return
-		}
-
-		// Process the received data (placeholder for actual game logic)
-		data := buffer[:n]
-		fmt.Printf("Received data from %s: %s\n", conn.RemoteAddr().String(), string(data))
-
-		// Optionally, send a response back (could be an acknowledgment, etc.)
-		response := []byte("ACK")
-		_, err = conn.Write(response)
-		if err != nil {
-			fmt.Printf("Error sending response to %s: %v\n", conn.RemoteAddr().String(), err)
-			return
-		}
-	}
+	go cm.HandleGameData(conn)
 }
 
 func (cm *ConnectionManager) HandleGameData(conn *net.TCPConn) {
