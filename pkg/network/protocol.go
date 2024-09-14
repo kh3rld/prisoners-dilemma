@@ -82,10 +82,11 @@ func parseOutcome(message string) (RoundOutcome, error) {
 }
 
 // Process player action: Update the player's current round action
-func processPlayerAction(playerID int, action string) {
+func processPlayerAction(playerID int, action string, cm *ConnectionManager) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
+	// Update player action based on their ID
 	if playerID == 1 {
 		game.Player1.Action = action
 		fmt.Printf("Player 1 action set to: %s\n", action)
@@ -94,10 +95,10 @@ func processPlayerAction(playerID int, action string) {
 		fmt.Printf("Player 2 action set to: %s\n", action)
 	}
 
-	// Check if both players have taken an action
+	// Check if both players have acted
 	if game.Player1.Action != "" && game.Player2.Action != "" {
 		fmt.Println("Both players have acted. Proceed to resolving the round.")
-		resolveRound()
+		resolveRound(cm)
 	}
 }
 
@@ -132,11 +133,11 @@ func applyRoundOutcome(outcome RoundOutcome, cm *ConnectionManager) {
 	// Advance to the next round
 	game.Round++
 	fmt.Printf("Proceeding to round %d\n", game.Round)
-	// Broadcast the updated game state to both players
+	// Broadcast the updated game state to both players using actual ConnectionManager
 	broadcastGameState(cm)
 }
 
-func resolveRound() {
+func resolveRound(cm *ConnectionManager) {
 	fmt.Printf("Resolving round %d: Player 1 chose %s, Player 2 chose %s\n", game.Round, game.Player1.Action, game.Player2.Action)
 
 	var outcome RoundOutcome
@@ -150,7 +151,7 @@ func resolveRound() {
 		outcome = RoundOutcome{Player1Points: 3, Player2Points: 0}
 	}
 
-	applyRoundOutcome(outcome, &ConnectionManager{})
+	applyRoundOutcome(outcome, cm)
 }
 
 func broadcastGameState(cm *ConnectionManager) {
@@ -170,6 +171,8 @@ func broadcastGameState(cm *ConnectionManager) {
 		_, err := conn.Write(append([]byte("GAME_STATE_UPDATE:"), gameStateBytes...))
 		if err != nil {
 			fmt.Printf("Error sending game state to %s: %v\n", peerAddr, err)
+			// Handle disconnection if necessary
+			cm.RemoveConnection(peerAddr)
 		}
 	}
 }
