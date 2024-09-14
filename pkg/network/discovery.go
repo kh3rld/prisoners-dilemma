@@ -89,24 +89,28 @@ func (ds *DiscoveryService) DiscoverAndConnect() {
 
 	// Initiate TCP connections to discovered peers
 	for _, peer := range peers {
-		go ds.connectToPeer(peer)
+		// playerID := 1
+		// if i%2 == 1 {
+		// 	playerID = 2
+		// }
+		go ds.cm.connectToPeer(peer)
 	}
 }
 
-func (ds *DiscoveryService) connectToPeer(peer string, playerID int) {
-	addr, err := net.ResolveTCPAddr("tcp", peer)
-	if err != nil {
-		fmt.Println("Error resolving peer address:", err)
-		return
-	}
+// func (ds *DiscoveryService) connectToPeer(peer string, playerID int) {
+// 	addr, err := net.ResolveTCPAddr("tcp", peer)
+// 	if err != nil {
+// 		fmt.Println("Error resolving peer address:", err)
+// 		return
+// 	}
 
-	conn, err := net.DialTCP("tcp", nil, addr)
-	if err != nil {
-		fmt.Println("Error connecting to peer:", err)
-		return
-	}
+// 	conn, err := net.DialTCP("tcp", nil, addr)
+// 	if err != nil {
+// 		fmt.Println("Error connecting to peer:", err)
+// 		return
+// 	}
 
-	// Add connection to ConnectionManager
-	ds.cm.AddConnection(peer, conn, playerID)
-	fmt.Printf("Successfully connected to %s as Player %d\n", peer, playerID)
-}
+// 	// Add connection to ConnectionManager
+// 	ds.cm.AddConnection(peer, conn, playerID)
+// 	fmt.Printf("Successfully connected to %s as Player %d\n", peer, playerID)
+// }
