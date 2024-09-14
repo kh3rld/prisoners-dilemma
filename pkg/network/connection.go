@@ -79,7 +79,7 @@ func (cm *ConnectionManager) HandleGameData(conn *net.TCPConn) {
 		switch {
 		case strings.HasPrefix(message, "PLAYER_ACTION"):
 			action := parseAction(message)
-			playerID := getPlayerID(conn) // TODO: Define logic to get the player ID
+			playerID := cm.getPlayerID(conn)
 			processPlayerAction(playerID, action)
 
 		case strings.HasPrefix(message, "GAME_STATE_UPDATE"):
