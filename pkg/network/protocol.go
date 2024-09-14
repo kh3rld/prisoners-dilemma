@@ -94,10 +94,10 @@ func processPlayerAction(playerID int, action string) {
 		fmt.Printf("Player 2 action set to: %s\n", action)
 	}
 
-	// Logic for resolving the round could go here if both players have acted
+	// Check if both players have taken an action
 	if game.Player1.Action != "" && game.Player2.Action != "" {
 		fmt.Println("Both players have acted. Proceed to resolving the round.")
-		// TODO: Implement resolveRound()
+		resolveRound()
 	}
 }
 
@@ -132,4 +132,21 @@ func applyRoundOutcome(outcome RoundOutcome) {
 	// Advance to the next round
 	game.Round++
 	fmt.Printf("Proceeding to round %d\n", game.Round)
+}
+
+func resolveRound() {
+	fmt.Printf("Resolving round %d: Player 1 chose %s, Player 2 chose %s\n", game.Round, game.Player1.Action, game.Player2.Action)
+
+	var outcome RoundOutcome
+	if game.Player1.Action == "cooperate" && game.Player2.Action == "cooperate" {
+		outcome = RoundOutcome{Player1Points: 2, Player2Points: 2}
+	} else if game.Player1.Action == "defect" && game.Player2.Action == "defect" {
+		outcome = RoundOutcome{Player1Points: 1, Player2Points: 1}
+	} else if game.Player1.Action == "cooperate" && game.Player2.Action == "defect" {
+		outcome = RoundOutcome{Player1Points: 0, Player2Points: 3}
+	} else if game.Player1.Action == "defect" && game.Player2.Action == "cooperate" {
+		outcome = RoundOutcome{Player1Points: 3, Player2Points: 0}
+	}
+
+	applyRoundOutcome(outcome)
 }
