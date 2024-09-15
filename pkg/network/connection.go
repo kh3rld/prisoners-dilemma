@@ -42,7 +42,9 @@ func (cm *ConnectionManager) AddConnection(addrInfo peer.AddrInfo) {
 }
 
 func (cm *ConnectionManager) connectToPeer(peer peer.ID) error {
+	cm.mu.Lock()
 	addrInfo, found := cm.peers[peer]
+	cm.mu.Unlock()
 	if !found {
 		return fmt.Errorf("peer not found")
 	}
