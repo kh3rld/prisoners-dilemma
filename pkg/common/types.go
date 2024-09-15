@@ -15,6 +15,11 @@ const (
 
 var src = rand.New(rand.NewSource(time.Now().UnixNano()))
 
+var Actions = map[string]string{
+	"C": "cooperate",
+	"D": "defect",
+}
+
 type PlayerInterface interface {
 	SetAction(action string)
 	GetAction() string
@@ -30,12 +35,16 @@ type Outcome struct {
 	Description string
 }
 
-func ValidateAction(action string) string {
-	action = strings.ToLower(action)
-	if action == ActionCooperate || action == ActionDefect {
-		return action
+func ValidateAction(action string) (string, error) {
+	action = strings.ToUpper(action)
+	if validAction, exists := Actions[action]; exists {
+		return validAction, nil
 	}
-	return ActionCooperate
+	return "", fmt.Errorf("invalid action")
+}
+
+func AddOrModifyAction(key, action string) {
+	Actions[key] = action
 }
 
 func GetRandomAction() string {

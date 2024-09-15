@@ -5,7 +5,6 @@ import (
 
 	"github.com/kh3rld/prisoners-dilemma/pkg/common"
 	"github.com/kh3rld/prisoners-dilemma/pkg/game"
-	"github.com/kh3rld/prisoners-dilemma/pkg/player"
 )
 
 const (
@@ -31,34 +30,26 @@ func GetRounds() int {
 	return rounds
 }
 
-func GetPlayerAction(name string) string {
-	var choice string
-	fmt.Printf("%s, Choose your action (1: cooperate / 2: defect): ", name)
-	fmt.Scanln(&choice)
-
-	switch choice {
-	case "1":
-		return "cooperate"
-	case "2":
-		return "defect"
-	default:
-		action := common.GetRandomAction()
-		fmt.Printf("Invalid input, randomly assigning action: %s\n", action)
-		return action
+func DisplayAvailableActions() {
+	fmt.Println("Available Acions")
+	for key, action := range common.Actions {
+		fmt.Printf("%s: %s\n", key, action)
 	}
 }
 
-func DisplayFinalResults(p1 player.Player, p2 player.Player) {
-	fmt.Println("Game Over!")
-	fmt.Printf("Total years in prison for %s: %d\n", p1.Name, p1.TotalYears)
-	fmt.Printf("Total years in prison for %s: %d\n", p2.Name, p2.TotalYears)
-
-	if p1.TotalYears < p2.TotalYears {
-		fmt.Printf("%s wins by cooperating more!\n", p1.Name)
-	} else if p1.TotalYears > p2.TotalYears {
-		fmt.Printf("%s wins by cooperating more!\n", p2.Name)
+func GetPlayerAction(name string) string {
+	DisplayAvailableActions()
+	fmt.Printf("Enter action for %s: ", name)
+	var action string
+	if _, err := fmt.Scanln(&action); err != nil {
+		fmt.Println("Invalid input. Try again.")
+		return GetPlayerAction(name)
+	}
+	if validAcion, err := common.ValidateAction(action); err == nil {
+		return validAcion
 	} else {
-		fmt.Println("It's a tie! Both players served the same amount of time.")
+		fmt.Println("Invalid action. Try again.")
+		return GetPlayerAction(name)
 	}
 }
 
@@ -66,25 +57,23 @@ func DisplayMessage(message string, colorFunc func(a ...interface{}) string) {
 	fmt.Println(colorFunc(message))
 }
 
-func DisplayGameStartMessage() {
-	fmt.Println(GreenText("Welcome to the Prisoner's Dilemma Game!"))
-	fmt.Println(BlueText("Developed by Kherld Hussein"))
-	fmt.Println("Special thanks to the Go community and open source contributors.")
-}
-
-func DisplayOutcome(p1 player.Player, p2 player.Player, game game.Game) {
-	fmt.Println(CenterText(fmt.Sprintf("%s chose to %s.", p1.Name, p1.Action)))
-	fmt.Println(CenterText(fmt.Sprintf("%s chose to %s.", p2.Name, p2.Action)))
-	fmt.Println(CenterText(game.Result.Description))
-	fmt.Println(CenterText(fmt.Sprintf("%s gets %d years in prison.", p1.Name, game.Result.Player1)))
-	fmt.Println(CenterText(fmt.Sprintf("%s gets %d years in prison.", p2.Name, game.Result.Player2)))
+func DisplayOutcome(g *game.Game) {
+	p1, p2 := g.Players[0], g.Players[1]
+	fmt.Println(CenterText(fmt.Sprintf("%s chose to %s.", p1.Name, p1.GetAction())))
+	fmt.Println(CenterText(fmt.Sprintf("%s chose to %s.", p2.Name, p2.GetAction())))
+	fmt.Println(CenterText(g.Result.Description))
+	fmt.Println(CenterText(fmt.Sprintf("%s gets %d year%s in prison.", p1.Name, g.Result.Player1, pluralize(g.Result.Player1))))
+	fmt.Println(CenterText(fmt.Sprintf("%s gets %d year%s in prison.", p2.Name, g.Result.Player2, pluralize(g.Result.Player2))))
 	fmt.Println(CenterText("-----------------------------"))
 }
 
-func DisplayRoundSummary(round int, p1, p2 player.Player, outcome game.Game) {
+func DisplayRoundSummary(round int, g *game.Game) {
+	p1, p2 := g.Players[0], g.Players[1]
 	fmt.Printf("Round %d Summary:\n", round)
-	fmt.Printf("%s chose %s, %s chose %s\n", p1.Name, p1.Action, p2.Name, p2.Action)
-	fmt.Printf("Outcome: %s gets %d year%s, %s gets %d year%s\n", p1.Name, outcome.Result.Player1, pluralize(outcome.Result.Player1), p2.Name, outcome.Result.Player2, pluralize(outcome.Result.Player2))
+	fmt.Printf("%s chose %s, %s chose %s\n", p1.Name, p1.GetAction(), p2.Name, p2.GetAction())
+	fmt.Printf("Outcome: %s gets %d year%s, %s gets %d year%s\n",
+		p1.Name, g.Result.Player1, pluralize(g.Result.Player1),
+		p2.Name, g.Result.Player2, pluralize(g.Result.Player2))
 }
 
 func pluralize(years int) string {
