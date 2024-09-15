@@ -19,6 +19,18 @@ type ConnectionManager struct {
 	mu    sync.Mutex
 }
 
+type NegotiationMessage struct {
+	PlayerID    string `json:"player_id"`
+	MessageType string `json:"message_type"`
+	Content     string `json:"content"`
+}
+
+type GameStateMessage struct {
+	PlayerID  string `json:"player_id"`
+	GameState string `json:"game_state"`
+	Round     int    `json:"round"`
+}
+
 // NewConnectionManager initializes a new ConnectionManager.
 func NewConnectionManager() (*ConnectionManager, error) {
 	h, err := libp2p.New()
