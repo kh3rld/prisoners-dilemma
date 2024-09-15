@@ -57,24 +57,27 @@ func (cm *ConnectionManager) RegisterProtocols() {
 }
 
 func (cm *ConnectionManager) handleNegotiation(s network.Stream) {
-	defer s.Close()
+	go func() {
+		defer s.Close()
 
-	var negotiationMsg NegotiationMessage
-	err := json.NewDecoder(s).Decode(&negotiationMsg)
-	if err != nil {
-		fmt.Printf("Failed to decode negotiation message: %v\n", err)
-		return
-	}
+		var negotiationMsg NegotiationMessage
+		err := json.NewDecoder(s).Decode(&negotiationMsg)
+		if err != nil {
+			fmt.Printf("Failed to decode negotiation message: %v\n", err)
+			return
+		}
 
-	// Process the negotiation message
-	fmt.Printf("Received negotiation message: %+v\n", negotiationMsg)
+		// Process negotiation message
+		fmt.Printf("Received negotiation message: %+v\n", negotiationMsg)
 
-	response := NegotiationMessage{
-		// TODO: Implement here
-	}
-	if err := json.NewEncoder(s).Encode(response); err != nil {
-		fmt.Printf("Failed to send negotiation response: %v\n", err)
-	}
+		// Send a response
+		response := NegotiationMessage{
+			// TODO: Implement
+		}
+		if err := json.NewEncoder(s).Encode(response); err != nil {
+			fmt.Printf("Failed to send negotiation response: %v\n", err)
+		}
+	}()
 }
 
 // Handle game state broadcast
