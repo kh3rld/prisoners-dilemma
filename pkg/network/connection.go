@@ -96,6 +96,19 @@ func (cm *ConnectionManager) RegisterPeerDisconnectHandler() {
 	})
 }
 
+func (cm *ConnectionManager) reconnectToPeer(peerID peer.ID) error {
+	cm.mu.Lock()
+	addrInfo, found := cm.peers[peerID]
+	cm.mu.Unlock()
+
+	if !found {
+		return fmt.Errorf("peer not found for reconnection")
+	}
+
+	fmt.Printf("Attempting to reconnect to peer %s\n", peerID)
+	return cm.host.Connect(context.Background(), addrInfo)
+}
+
 func (cm *ConnectionManager) Close() error {
 	return cm.host.Close()
 }
