@@ -1,22 +1,49 @@
 package ui
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"runtime"
+	"strings"
+
+	"golang.org/x/term"
 )
 
 func DisplayArt() {
-	fmt.Println(CenterText(GreenText("===================================")))
-	fmt.Println(CenterText(BlueText("  PRISONER'S DILEMMA GAME")))
-	fmt.Println(CenterText(GreenText("===================================")))
-	fmt.Println()
+	art, err := LoadArt()
+	if err != nil {
+		fmt.Printf("erro loading %v", err)
+	}
+	fmt.Println(CenterText(BlueText(art)))
 	fmt.Println(CenterText(GreenText("Developed by Kherld Hussein")))
 	fmt.Println(CenterText(GreenText("Special thanks to the Go community")))
 	fmt.Println(CenterText(GreenText("and open source contributors.")))
 	fmt.Println()
 }
 
-func DisplayHelp() {
+func LoadArt() (string, error) {
+	file, err := os.Open("../configs/art.txt")
+	if err != nil {
+		return "", fmt.Errorf("error opening art: %v", err)
+	}
+	defer file.Close()
 
+	scanner := bufio.NewScanner(file)
+	var data strings.Builder
+
+	for scanner.Scan() {
+		data.WriteString(scanner.Text() + "\n")
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("error reading art: %v", err)
+	}
+
+	return data.String(), nil
+}
+
+func DisplayHelp() {
 	fmt.Println(CenterText("Instructions:"))
 	fmt.Println(CenterText("1. Choose whether to play locally or over the network."))
 	fmt.Println(CenterText("2. If playing over the network, you can host or join a game."))
