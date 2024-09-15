@@ -36,6 +36,8 @@ func NewConnectionManager() (*ConnectionManager, error) {
 
 // AddConnection adds a new connection to the ConnectionManager.
 func (cm *ConnectionManager) AddConnection(addrInfo peer.AddrInfo) {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
 	cm.peers[addrInfo.ID] = addrInfo
 }
 
