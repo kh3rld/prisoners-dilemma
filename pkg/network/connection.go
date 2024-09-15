@@ -83,6 +83,19 @@ func (cm *ConnectionManager) handleGameState(s network.Stream) {
 	fmt.Printf("Received game state: %+v\n", gameState)
 }
 
+func (cm *ConnectionManager) RegisterPeerDisconnectHandler() {
+	cm.host.Network().Notify(&network.NotifyBundle{
+		DisconnectedF: func(n network.Network, conn network.Conn) {
+			peerID := conn.RemotePeer()
+			fmt.Printf("Peer %s disconnected\n", peerID)
+
+			cm.mu.Lock()
+			delete(cm.peers, peerID)
+			cm.mu.Unlock()
+		},
+	})
+}
+
 func (cm *ConnectionManager) Close() error {
 	return cm.host.Close()
 }
