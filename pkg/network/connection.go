@@ -62,11 +62,10 @@ func (cm *ConnectionManager) handleNegotiation(s network.Stream) {
 	var negotiationMsg NegotiationMessage
 	err := json.NewDecoder(s).Decode(&negotiationMsg)
 	if err != nil {
-		// handle error
+		fmt.Printf("Failed to decode negotiation message: %v\n", err)
 		return
 	}
-
-	// TODO: Process negotiation message
+	fmt.Printf("Received negotiation message: %+v\n", negotiationMsg)
 }
 
 // Handle game state broadcast
@@ -77,11 +76,11 @@ func (cm *ConnectionManager) handleGameState(s network.Stream) {
 	var gameState GameStateMessage
 	err := json.NewDecoder(s).Decode(&gameState)
 	if err != nil {
-		// handle error
+		fmt.Printf("Failed to decode game state message: %v\n", err)
 		return
 	}
-
-	// TODO: Process game state message
+	// Process game state message
+	fmt.Printf("Received game state: %+v\n", gameState)
 }
 
 func (cm *ConnectionManager) Close() error {
