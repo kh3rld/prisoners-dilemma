@@ -65,7 +65,16 @@ func (cm *ConnectionManager) handleNegotiation(s network.Stream) {
 		fmt.Printf("Failed to decode negotiation message: %v\n", err)
 		return
 	}
+
+	// Process the negotiation message
 	fmt.Printf("Received negotiation message: %+v\n", negotiationMsg)
+
+	response := NegotiationMessage{
+		// TODO: Implement here
+	}
+	if err := json.NewEncoder(s).Encode(response); err != nil {
+		fmt.Printf("Failed to send negotiation response: %v\n", err)
+	}
 }
 
 // Handle game state broadcast
