@@ -1,35 +1,118 @@
 package game
 
 import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/kh3rld/prisoners-dilemma/pkg/common"
 	"github.com/kh3rld/prisoners-dilemma/pkg/player"
 )
 
 type Game struct {
-	Player1 *player.Player
-	Player2 *player.Player
+	Players []*player.Player
 	Rounds  int
+	Config  *GameConfig
 	Result  common.Outcome
 }
 
-func (g *Game) DetermineOutcome() {
-	a1 := g.Player1.GetAction()
-	a2 := g.Player2.GetAction()
+type Rule struct {
+	Action1     string `json:"action1"`
+	Action2     string `json:"action2"`
+	Outcome1    int    `json:"outcome1"`
+	Outcome2    int    `json:"outcome2"`
+	Description string `json:"description"`
+}
 
-	switch {
-	case a1 == common.ActionCooperate && a2 == common.ActionCooperate:
-		g.Result = common.Outcome{Player1: 1, Player2: 1, Description: "Both players cooperated. Each gets 1 year in prison."}
-	case a1 == common.ActionDefect && a2 == common.ActionCooperate:
-		g.Result = common.Outcome{Player1: 0, Player2: 3, Description: "Player 1 defects. Player 1 goes free, Player 2 gets 3 years in prison."}
-	case a1 == common.ActionCooperate && a2 == common.ActionDefect:
-		g.Result = common.Outcome{Player1: 3, Player2: 0, Description: "Player 2 defects. Player 2 goes free, Player 1 gets 3 years in prison."}
-	case a1 == common.ActionDefect && a2 == common.ActionDefect:
-		g.Result = common.Outcome{Player1: 2, Player2: 2, Description: "Both players defect. Each gets 2 years in prison."}
+type GameConfig struct {
+	Rules []Rule `json:"rules"`
+}
+
+func LoadGameConfig(file string) (*GameConfig, error) {
+	projectRoot, err := FindProjectRoot()
+	if err != nil {
+		fmt.Println("Error finding project root:", err)
+		return nil, err
 	}
 
-	g.Player1.SetTotalYears(g.Player1.GetTotalYears() + g.Result.Player1)
-	g.Player2.SetTotalYears(g.Player2.GetTotalYears() + g.Result.Player2)
+	configFilePath := filepath.Join(projectRoot, file)
+	configFile, err := os.ReadFile(configFilePath)
+	if err != nil {
+		return nil, err
+	}
 
+	var config GameConfig
+	if err := json.Unmarshal(configFile, &config); err != nil {
+		return nil, err
+	}
+
+	return &config, nil
+}
+
+func (g *Game) DetermineOutcome() {
+	if len(g.Players) < 2 {
+		g.Result.Description = "Not enough players to determine outcome."
+		return
+	}
+
+	// Get actions of both players
+	p1 := g.Players[0]
+	p2 := g.Players[1]
+
+	action1 := p1.GetAction()
+	action2 := p2.GetAction()
+
+	// Look for a matching rule
+	for _, rule := range g.Config.Rules {
+		if (rule.Action1 == action1 && rule.Action2 == action2) ||
+			(rule.Action1 == action2 && rule.Action2 == action1) {
+
+			// Determine which outcome to apply to each player
+			if rule.Action1 == action1 && rule.Action2 == action2 {
+				p1.SetTotalYears(p1.GetTotalYears() + rule.Outcome1)
+				p2.SetTotalYears(p2.GetTotalYears() + rule.Outcome2)
+			} else {
+				p1.SetTotalYears(p1.GetTotalYears() + rule.Outcome2)
+				p2.SetTotalYears(p2.GetTotalYears() + rule.Outcome1)
+			}
+
+			// Set the result description
+			g.Result.Description = rule.Description
+
+			// Update the result struct with the players' total prison years
+			g.Result.Player1 = p1.GetTotalYears()
+			g.Result.Player2 = p2.GetTotalYears()
+
+			return
+		}
+	}
+
+	// No matching rule found
+	g.Result.Description = "No matching rules for these actions."
+}
+
+func FindProjectRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	// Traverse up the directory tree until we find go.mod
+	for {
+		modPath := filepath.Join(dir, "go.mod")
+		if _, err := os.Stat(modPath); !os.IsNotExist(err) {
+			return dir, nil
+		}
+
+		parentDir := filepath.Dir(dir)
+		if parentDir == dir {
+			break
+		}
+		dir = parentDir
+	}
+
+	return "", fmt.Errorf("go.mod not found")
 }
 
 func (g *Game) PlayRound(round int, player1, player2 *player.Player) common.Outcome {

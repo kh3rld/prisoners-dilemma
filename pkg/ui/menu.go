@@ -54,19 +54,6 @@ func DisplayHelp() {
 	fmt.Println()
 }
 
-func GetTerminalWidth() int {
-	if runtime.GOOS == "windows" {
-		return 80
-	}
-
-	fd := int(os.Stdout.Fd())
-	width, _, err := term.GetSize(fd)
-	if err != nil {
-		return 80
-	}
-	return width
-}
-
 func CenterText(text string) string {
 	width := GetTerminalWidth()
 	padding := (width - len(text)) / 2

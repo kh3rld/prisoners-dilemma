@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kh3rld/prisoners-dilemma/pkg/game"
+	"github.com/kh3rld/prisoners-dilemma/pkg/player"
 	"github.com/kh3rld/prisoners-dilemma/pkg/settings"
 	"github.com/kh3rld/prisoners-dilemma/pkg/ui"
 	"github.com/kh3rld/prisoners-dilemma/pkg/utils"
@@ -53,9 +55,16 @@ func handleMenuChoice() {
 
 func StartLocalGame() {
 	utils.ShowProgress("Starting game...")
+	configFilePath := "game_rules.json"
+
+	// Load game config
+	config, err := game.LoadGameConfig(configFilePath)
+	if err != nil {
+		fmt.Println("Error loading game config:", err)
+		return
+	}
 
 	p1, p2, err := settings.SetPlayers()
-
 	if err != nil {
 		fmt.Println("Error: Could not set up players.")
 		return
@@ -63,5 +72,14 @@ func StartLocalGame() {
 
 	rounds, detailedSummaries := settings.GetUserSettings()
 
-	settings.RunGame(p1, p2, rounds, detailedSummaries)
+	p1.SetName(p1.GetName())
+	p2.SetName(p2.GetName())
+
+	g := game.Game{
+		Players: []*player.Player{p1, p2},
+		Rounds:  rounds,
+		Config:  config,
+	}
+
+	settings.RunGame(&g, rounds, detailedSummaries)
 }

@@ -26,16 +26,19 @@ func SetPlayers() (*player.Player, *player.Player, error) {
 	return p1, p2, nil
 }
 
-func RunGame(p1, p2 *player.Player, rounds int, detailedSummaries bool) {
-	game := &game.Game{Player1: p1, Player2: p2, Rounds: rounds}
+func RunGame(g *game.Game, rounds int, detailedSummaries bool) {
 	for i := 1; i <= rounds; i++ {
 		fmt.Printf("\nStarting Round %d\n", i)
-		p1.SetAction(ui.GetPlayerAction(p1.Name))
-		p2.SetAction(ui.GetPlayerAction(p2.Name))
-		game.DetermineOutcome()
-		ui.DisplayOutcome(*p1, *p2, *game)
+		for _, p := range g.Players {
+			p.SetAction(ui.GetPlayerAction(p.GetName()))
+		}
+
+		g.DetermineOutcome()
+
+		ui.DisplayOutcome(g)
+
 		if detailedSummaries {
-			ui.DisplayRoundSummary(i, *p1, *p2, *game)
+			ui.DisplayRoundSummary(i, g)
 		}
 	}
 }

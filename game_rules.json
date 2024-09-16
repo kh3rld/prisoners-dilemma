@@ -1,0 +1,32 @@
+{
+    "rules": [
+        {
+            "action1": "cooperate",
+            "action2": "cooperate",
+            "outcome1": 1,
+            "outcome2": 1,
+            "description": "Both players cooperated. Each gets 1 year in prison."
+        },
+        {
+            "action1": "defect",
+            "action2": "cooperate",
+            "outcome1": 0,
+            "outcome2": 3,
+            "description": "Player 1 defects. Player 1 goes free, Player 2 gets 3 years."
+        },
+        {
+            "action1": "cooperate",
+            "action2": "defect",
+            "outcome1": 3,
+            "outcome2": 0,
+            "description": "Player 2 defects. Player 2 goes free, Player 1 gets 3 years."
+        },
+        {
+            "action1": "defect",
+            "action2": "defect",
+            "outcome1": 2,
+            "outcome2": 2,
+            "description": "Both players defect. Each gets 2 years in prison."
+        }
+    ]
+}
